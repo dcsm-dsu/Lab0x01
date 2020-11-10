@@ -13,7 +13,7 @@ public class Main {
         validateSearchMethods();
 
         // Tests
-        runTimeTests(1000000000,  1, 1000000000);
+        runTimeTests(1000000000,  1, Integer.MAX_VALUE);
 
     }
 
@@ -81,9 +81,7 @@ public class Main {
         int randomNumberList[] = new int[length];
 
         for (int i = 0; i < length; i++){
-            //randomNumberList[i] = (int) Math.random() * (((max - min)+1) + min );
             randomNumberList[i] = r.nextInt((max-min)+min);
-            //System.out.printf("%d, ", randomNumberList[i]);
         }
 
         Arrays.sort(randomNumberList);
@@ -120,7 +118,6 @@ public class Main {
 
     public static void runTimeTests(long  maximumTime, int min_N, int max_N){
 
-        long lastRunTime = 0;
         long averageSequentialTime = 0;
         long averageBinaryTime = 0;
         long totalTime = 0;
@@ -130,14 +127,12 @@ public class Main {
         String seqExpectedRatio = "na";
         String binActualRatio = "na";
         String binExpectedRatio = "na";
+        String seqTimeOutput = "na";
+        String binTimeOutput = "na";
         double seqPreviousTime = 0;
         double binPreviousTime = 0;
         int MININT = Integer.MIN_VALUE;
         int MAXINT = Integer.MAX_VALUE;
-        var printSeqRatio= "na";
-        var printBinRatio= "na";
-        long runTimeStart =0;
-        long runTimeEnd = 0;
 
         // Print Header
         System.out.printf("\n%20s%-20s%45s%-20s", "", "Sequential","", "Binary");
@@ -146,82 +141,88 @@ public class Main {
 
         for (int n = min_N; n < max_N; n = n*2){
 
-            runTimeStart = getCpuTime();
             // Data Generation
-            int sortedList[] = new int[n];
-            sortedList = generateSortedList(n, MININT, MAXINT);
-/*
-            for (int test = 0; test < 10; test++){
-                System.out.println(sortedList[test]);
-            }
-*/
+            int sortedList[] = generateSortedList(n, MININT, MAXINT);
 
             Random r = new Random();
             int randomInt = r.nextInt(((MAXINT - MININT)+MININT));
 
             // Run tests
-            if (lastRunTime >= maximumTime){
-/*
-                System.out.println("Times up! at: " + lastRunTime);
-                break;
-*/
-            }
-            else {
-
-                for (int runSeq = 0; runSeq < 10000; runSeq++){
-                   startTime = getCpuTime();
-                   sequentialSearch(sortedList, randomInt);
-                   endTime = getCpuTime();
-                   totalTime = totalTime + (endTime - startTime);
+            if (seqPreviousTime < maximumTime){
+                for (int runSeq = 0; runSeq < 100; runSeq++){
+                    startTime = getCpuTime();
+                    sequentialSearch(sortedList, randomInt);
+                    endTime = getCpuTime();
+                    totalTime = totalTime + (endTime - startTime);
                 }
                 seqPreviousTime = averageSequentialTime;
-                averageSequentialTime = totalTime / 10000;
+                averageSequentialTime = totalTime / 100;
                 totalTime = 0;
 
-                for (int runBin = 0; runBin < 10000; runBin++){
-                   startTime = getCpuTime();
-                   binarySearch(sortedList, randomInt);
-                   endTime = getCpuTime();
-                   totalTime = totalTime + (endTime - startTime);
+            } else  averageSequentialTime = -1;
+
+            if (binPreviousTime < maximumTime){
+                for (int runBin = 0; runBin < 100; runBin++){
+                    startTime = getCpuTime();
+                    binarySearch(sortedList, randomInt);
+                    endTime = getCpuTime();
+                    totalTime = totalTime + (endTime - startTime);
                 }
                 binPreviousTime = averageBinaryTime;
-                averageBinaryTime = totalTime / 10000;
+                averageBinaryTime = totalTime / 100;
                 totalTime = 0;
 
-                // Calculate Ratios
-                if (seqPreviousTime != 0){
-                    seqActualRatio= Double.toString((averageSequentialTime / seqPreviousTime));
-                    seqActualRatio = seqActualRatio.substring(0, Math.min(seqActualRatio.length(), 4));
-                    // https://stackoverflow.com/questions/8499698/trim-a-string-based-on-the-string-length
-                }
-                if (binPreviousTime != 0){
-                    binActualRatio = Double.toString( (averageBinaryTime / binPreviousTime));
-                    binActualRatio = binActualRatio.substring(0, Math.min(binActualRatio.length(), 4));
-                }
-                if (n > 1){
-                    seqExpectedRatio = "~2";
-                    if (n>2){
-                        binExpectedRatio = String.format("~%2.2f", (double)(Math.log(n)/Math.log(2))/(Math.log(n/2)/Math.log(2)));
-                    } else {
-                        binExpectedRatio = "na";
-                    }
+            } else averageBinaryTime = -1;
 
+            // Calculate Ratios
+            if (seqPreviousTime != 0){
+                seqActualRatio= Double.toString((averageSequentialTime / seqPreviousTime));
+                seqActualRatio = seqActualRatio.substring(0, Math.min(seqActualRatio.length(), 4));
+                // https://stackoverflow.com/questions/8499698/trim-a-string-based-on-the-string-length
+            }
+            if (binPreviousTime != 0){
+                binActualRatio = Double.toString( (averageBinaryTime / binPreviousTime));
+                binActualRatio = binActualRatio.substring(0, Math.min(binActualRatio.length(), 4));
+            }
+            if (n > 1){
+                seqExpectedRatio = "~2";
+                if (n>2){
+                    binExpectedRatio = String.format("~%2.2f", (double)(Math.log(n)/Math.log(2))/(Math.log(n/2)/Math.log(2)));
                 } else {
-                    seqExpectedRatio = "na";
-                    seqExpectedRatio = "na";
+                    binExpectedRatio = "na";
                 }
 
-                //print test results
-                System.out.printf("%-20s%-20s%-20s%-20s     %-20s%-20s%-20s\n", n, averageSequentialTime, seqActualRatio, seqExpectedRatio,
-                        averageBinaryTime, binActualRatio, binExpectedRatio);
+            } else {
+                binExpectedRatio = "na";
+                seqExpectedRatio = "na";
+            }
 
-                runTimeEnd = getCpuTime();
-                lastRunTime = runTimeEnd - runTimeStart;
+            if (averageSequentialTime != -1){
+                seqTimeOutput = Long.toString(averageSequentialTime);
+            } else {
+                seqTimeOutput = "na";
+                seqExpectedRatio = "na";
+                seqActualRatio = "na";
+            }
+            if (averageBinaryTime != -1){
+                binTimeOutput = Long.toString(averageBinaryTime);
+            } else {
+                binTimeOutput = "na";
+                binExpectedRatio = "na";
+                binActualRatio = "na";
             }
 
 
+
+            //print test results
+            System.out.printf("%-20s%-20s%-20s%-20s     %-20s%-20s%-20s\n", n, seqTimeOutput, seqActualRatio, seqExpectedRatio,
+                    binTimeOutput, binActualRatio, binExpectedRatio);
 
 
         }
+
+
+
+
     }
 }
